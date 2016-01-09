@@ -13,3 +13,22 @@ npm install --save @rexxars/prosemirror-dist
 ## Usage
 
 See [ProseMirror](http://prosemirror.net/) for documentation.
+
+When you see `require`/`import` calls to `prosemirror`, simply replace them with `@rexxars/prosemirror-dist`. For instance:
+
+```js
+// Instead of:
+var edit = require("prosemirror/dist/edit")
+
+// Put:
+var edit = require("@rexxars/prosemirror-dist/dist/edit")
+```
+
+Or in ES6:
+```js
+// Instead of:
+import {ProseMirror} from "prosemirror/dist/edit"
+
+// Put:
+import {ProseMirror} from "@rexxars/prosemirror-dist/dist/edit"
+```
