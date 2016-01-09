@@ -1,0 +1,32 @@
+{
+  "name": "@rexxars/prosemirror-dist",
+  "version": "0.0.1",
+  "description": "Pre-built version of ProseMirror, updated almost daily, if there are changes in upstream repo",
+  "main": "index.js",
+  "dependencies": {
+    "prosemirror": "github:prosemirror/prosemirror"
+  },
+  "devDependencies": {
+    "babel": "^5.8.34"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rexxars/prosemirror-dist.git"
+  },
+  "keywords": [
+    "prosemirror",
+    "dist",
+    "distributed",
+    "bundle",
+    "temporary"
+  ],
+  "author": "Marijn Haverbeke",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rexxars/prosemirror-dist/issues"
+  },
+  "homepage": "https://github.com/rexxars/prosemirror-dist#readme"
+}
