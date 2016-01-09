@@ -4,12 +4,14 @@
 var fs = require('fs');
 var path = require('path');
 var childProc = require('child_process');
-var pkg = require('../package.json');
+var GitHubApi = require('github');
 var procStream = require('procstreams');
+var pkg = require('../package.json');
 
 var dryRun = process.argv.indexOf('--dry-run') !== -1;
 var verbose = process.argv.indexOf('--verbose') !== -1;
 var nodejitsu = process.argv.indexOf('--nodejitsu') !== -1;
+var github = new GitHubApi({ version: '3.0.0' });
 var hashMatcher = /prosemirror@.*?\(git:\/\/github\.com\/prosemirror\/prosemirror\.git#(.*?)\)/;
 var npmRegistry = 'https://registry.' + (nodejitsu ? 'nodejitsu.com' : 'npmjs.org');
 var spawnOpts = {
@@ -21,61 +23,80 @@ var spawnOpts = {
 fs.statSync(path.join(__dirname, '..', '.git'));
 log('`.git` exists, we can commit new releases');
 
-// Run NPM update, ensure success
-log('Running `npm update`');
-var update = exec('npm', ['update', '--registry', npmRegistry]);
-ok(update);
+github.repos.getCommits({
+    user: 'prosemirror',
+    repo: 'prosemirror',
+    per_page: 1 // eslint-disable-line camelcase
+}, function(err, res) {
+    if (err) {
+        throw err;
+    }
 
-// Ensure that we got a git commit hash back from `npm update`
-var hash = update.stdout.match(hashMatcher);
-if (!hash || !hash[1]) {
-    throw new Error('Couldn\'t find git commit hash after running npm update');
+    if (res[0].sha === pkg.prosemirror.gitHash) {
+        log('No new commits since last release, stopping release process');
+        process.exit(0);
+    }
+
+    updatePackage();
+});
+
+function updatePackage() {
+    // Run NPM update, ensure success
+    log('Running `npm update`');
+    var update = exec('npm', ['update', '--registry', npmRegistry]);
+    ok(update);
+
+    // Ensure that we got a git commit hash back from `npm update`
+    var hash = update.stdout.match(hashMatcher);
+    if (!hash || !hash[1]) {
+        throw new Error('Couldn\'t find git commit hash after running npm update');
+    }
+
+    // Check if it's the same commit hash as the previous release
+    var commitHash = hash[1];
+    if (pkg.prosemirror.gitHash === commitHash) {
+        log('Same hash as last release, stopping release process');
+        process.exit(0);
+    }
+
+    log('Got new commit after `npm update`: ' + commitHash);
+
+    // Ensure that tests are passing. Running the browser tests would be
+    // a lot of work, so we'll skip that for now (contributions welcome)
+    var proseOpts = { cwd: path.resolve(path.join(__dirname), '..', 'node_modules', 'prosemirror') };
+    log('Installing prosemirror dependencies in order to run tests');
+    ok(exec('npm', ['install', '--registry', npmRegistry], proseOpts));
+
+    log('Running prosemirror tests');
+    ok(exec('npm', ['test'], proseOpts));
+
+    // Build prosemirror to dist files
+    log('Building prosemirror source files to dist versions');
+    var babelPath = path.join(__dirname, '..', 'node_modules', '.bin', 'babel');
+    ok(exec(babelPath, ['-d', 'dist', 'node_modules/prosemirror/src']));
+
+    // Generate an md5 sum for the built files
+    // (might be prosemirror just made readme changes, for instance)
+    log('Generating MD5-sum for dist files');
+    procStream('find', ['dist', '-type', 'f'], spawnOpts)
+        .pipe('sort', ['-u'], spawnOpts)
+        .pipe('xargs', ['cat'], spawnOpts)
+        .pipe('md5sum')
+        .data(function(err, stdout) {
+            if (err) {
+                throw err;
+            }
+
+            var distHash = stdout.toString().split(/\s/, 1)[0];
+            if (pkg.prosemirror.distHash === distHash) {
+                log('Same dist-hash as last release, stopping release process');
+                process.exit(0);
+            }
+
+            log('New dist-hash calculated (' + distHash + '), proceeding');
+            updateAndRelease(distHash, commitHash);
+        });
 }
-
-// Check if it's the same commit hash as the previous release
-var commitHash = hash[1];
-if (pkg.prosemirror.gitHash === commitHash) {
-    log('Same hash as last release, stopping release process');
-    process.exit(0);
-}
-
-log('Got new commit after `npm update`: ' + commitHash);
-
-// Ensure that tests are passing. Running the browser tests would be
-// a lot of work, so we'll skip that for now (contributions welcome)
-var proseOpts = { cwd: path.resolve(path.join(__dirname), '..', 'node_modules', 'prosemirror') };
-log('Installing prosemirror dependencies in order to run tests');
-ok(exec('npm', ['install', '--registry', npmRegistry], proseOpts));
-
-log('Running prosemirror tests');
-ok(exec('npm', ['test'], proseOpts));
-
-// Build prosemirror to dist files
-log('Building prosemirror source files to dist versions');
-var babelPath = path.join(__dirname, '..', 'node_modules', '.bin', 'babel');
-ok(exec(babelPath, ['-d', 'dist', 'node_modules/prosemirror/src']));
-
-// Generate an md5 sum for the built files
-// (might be prosemirror just made readme changes, for instance)
-log('Generating MD5-sum for dist files');
-procStream('find', ['dist', '-type', 'f'], spawnOpts)
-    .pipe('sort', ['-u'], spawnOpts)
-    .pipe('xargs', ['cat'], spawnOpts)
-    .pipe('md5sum')
-    .data(function(err, stdout) {
-        if (err) {
-            throw err;
-        }
-
-        var distHash = stdout.toString().split(/\s/, 1)[0];
-        if (pkg.prosemirror.distHash === distHash) {
-            log('Same dist-hash as last release, stopping release process');
-            process.exit(0);
-        }
-
-        log('New dist-hash calculated (' + distHash + '), proceeding');
-        updateAndRelease(distHash, commitHash);
-    });
 
 function updateAndRelease(distHash, gitHash) {
     // Update package.json

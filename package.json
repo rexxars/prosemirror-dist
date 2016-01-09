@@ -7,6 +7,7 @@
     "babel": "^5.8.34",
     "eslint": "^1.10.3",
     "eslint-config-vaffel": "^4.0.0",
+    "github": "^0.2.4",
     "procstreams": "^0.3.0",
     "prosemirror": "github:prosemirror/prosemirror"
   },
