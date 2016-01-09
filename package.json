@@ -3,15 +3,15 @@
   "version": "0.0.1",
   "description": "Pre-built version of ProseMirror, updated almost daily, if there are changes in upstream repo",
   "main": "index.js",
-  "dependencies": {
+  "devDependencies": {
+    "babel": "^5.8.34",
+    "eslint": "^1.10.3",
+    "eslint-config-vaffel": "^4.0.0",
+    "procstreams": "^0.3.0",
     "prosemirror": "github:prosemirror/prosemirror"
   },
-  "devDependencies": {
-    "babel": "^5.8.34"
-  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel -d dist node_modules/prosemirror/src"
+    "test": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -29,5 +29,9 @@
   "bugs": {
     "url": "https://github.com/rexxars/prosemirror-dist/issues"
   },
-  "homepage": "https://github.com/rexxars/prosemirror-dist#readme"
+  "homepage": "https://github.com/rexxars/prosemirror-dist#readme",
+  "prosemirror": {
+    "gitHash": "",
+    "distHash": ""
+  }
 }
