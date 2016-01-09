@@ -31,7 +31,7 @@
   },
   "homepage": "https://github.com/rexxars/prosemirror-dist#readme",
   "prosemirror": {
-    "gitHash": "",
-    "distHash": ""
+    "gitHash": "d65500864737a218beea6dd32bc2592a081f7848",
+    "distHash": "ec3582ff2e215a100e73dc9130841f77"
   }
 }
