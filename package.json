@@ -1,6 +1,6 @@
 {
   "name": "@rexxars/prosemirror-dist",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Pre-built version of ProseMirror, updated almost daily, if there are changes in upstream repo",
   "main": "index.js",
   "devDependencies": {
