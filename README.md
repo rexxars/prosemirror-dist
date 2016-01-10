@@ -32,3 +32,12 @@ import {ProseMirror} from "prosemirror/dist/edit"
 // Put:
 import {ProseMirror} from "@rexxars/prosemirror-dist/dist/edit"
 ```
+
+If you're using Browserify, an alternative is to use [aliasify](https://www.npmjs.com/package/aliasify) with the following configuration in your `package.json`, which will allow you to keep using the same `require`/`import` statements as you normally would:
+```js
+"aliasify": {
+  "replacements": {
+    "prosemirror/(.*)": "@rexxars/prosemirror-dist/$1"
+  }
+}
+```
