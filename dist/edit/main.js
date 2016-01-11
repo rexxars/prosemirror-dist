@@ -281,7 +281,7 @@ var ProseMirror = (function () {
   }, {
     key: "checkPos",
     value: function checkPos(pos, textblock) {
-      if (!this.doc.isValidPos(pos, textblock)) _utilError.AssertionError.raise("Position " + pos + " is not valid in current document");
+      if (!pos.isValid(this.doc, textblock)) _utilError.AssertionError.raise("Position " + pos + " is not valid in current document");
     }
   }, {
     key: "ensureOperation",

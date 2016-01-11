@@ -268,25 +268,6 @@ var Node = (function () {
       return nodes;
     }
 
-    // :: (Pos, ?bool) → bool
-    // Checks whether the given position is valid in this node. When
-    // `requireTextblock` is true, only positions inside textblocks are
-    // considered valid.
-  }, {
-    key: "isValidPos",
-    value: function isValidPos(pos, requireTextblock) {
-      for (var i = 0, node = this;; i++) {
-        if (i == pos.path.length) {
-          if (requireTextblock && !node.isTextblock) return false;
-          return pos.offset <= node.size;
-        } else {
-          var n = pos.path[i];
-          if (n >= node.size) return false;
-          node = node.child(n);
-        }
-      }
-    }
-
     // :: (Pos, Pos) → {from: Pos, to: Pos}
     // Finds the narrowest sibling range (two positions that both point
     // into the same node) that encloses the given positions.

@@ -81,6 +81,8 @@ var TooltipMenu = (function () {
     this.update = new _uiUpdate.UpdateScheduler(pm, "change selectionChange blur commandsChanged", function () {
       return _this.prepareUpdate();
     });
+    this.onContextMenu = this.onContextMenu.bind(this);
+    pm.content.addEventListener("contextmenu", this.onContextMenu);
 
     this.tooltip = new _uiTooltip.Tooltip(pm.wrapper, "above");
     this.menu = new _menu.Menu(pm, new _menu.TooltipDisplay(this.tooltip), function () {
@@ -95,6 +97,7 @@ var TooltipMenu = (function () {
     value: function detach() {
       this.update.detach();
       this.tooltip.detach();
+      this.pm.content.removeEventListener("contextmenu", this.onContextMenu);
     }
   }, {
     key: "items",
@@ -103,7 +106,7 @@ var TooltipMenu = (function () {
       if (!inline) items = [];else if (this.config.inlineItems) items = getItems(this.pm, this.config.inlineItems);else items = (0, _menu.menuGroups)(this.pm, this.config.inlineGroups || ["inline"]);
 
       if (block) {
-        if (this.config.blockItems) items = items.concat(getItems(this.pm, this.config.blockItems));else items = items.concat((0, _menu.menuGroups)(this.pm, this.config.blockGroups || ["block"]));
+        if (this.config.blockItems) addIfNew(items, getItems(this.pm, this.config.blockItems));else addIfNew(items, (0, _menu.menuGroups)(this.pm, this.config.blockGroups || ["block"]));
       }
       return items;
     }
@@ -190,6 +193,16 @@ var TooltipMenu = (function () {
       var node = (0, _dom.elt)("div", { "class": classPrefix + "-linktext" }, (0, _dom.elt)("a", { href: link.attrs.href, title: link.attrs.title }, link.attrs.href));
       this.tooltip.open(node, pos);
     }
+  }, {
+    key: "onContextMenu",
+    value: function onContextMenu(e) {
+      var pos = this.pm.posAtCoords({ left: e.clientX, top: e.clientY });
+      if (!pos || !pos.isValid(this.pm.doc, true)) return;
+
+      this.pm.setTextSelection(pos, pos);
+      this.pm.flush();
+      this.menu.show(this.items(true, false), topCenterOfSelection());
+    }
   }]);
 
   return TooltipMenu;
@@ -224,6 +237,12 @@ function topOfNodeSelection(pm) {
   if (!selected) return { left: 0, top: 0 };
   var box = selected.getBoundingClientRect();
   return { left: Math.min((box.left + box.right) / 2, box.left + 20), top: box.top };
+}
+
+function addIfNew(array, elts) {
+  for (var i = 0; i < elts.length; i++) {
+    if (array.indexOf(elts[i]) == -1) array.push(elts[i]);
+  }
 }
 
 (0, _dom.insertCSS)("\n\n." + classPrefix + "-linktext a {\n  color: white;\n  text-decoration: none;\n  padding: 0 5px;\n}\n\n." + classPrefix + "-linktext a:hover {\n  text-decoration: underline;\n}\n\n");

@@ -67,10 +67,10 @@ Object.defineProperty(exports, "CommandSet", {
     return _command.CommandSet;
   }
 });
-Object.defineProperty(exports, "defineParamHandler", {
+Object.defineProperty(exports, "defineDefaultParamHandler", {
   enumerable: true,
   get: function get() {
-    return _command.defineParamHandler;
+    return _command.defineDefaultParamHandler;
   }
 });
 Object.defineProperty(exports, "Command", {

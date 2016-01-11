@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.defineInputRule = defineInputRule;
 
 var _model = require("../model");
 
@@ -11,12 +10,23 @@ var _edit = require("../edit");
 
 var _inputrules = require("./inputrules");
 
-// :: bool #path=autoInput #kind=option
-// When set to true, enables the input rules defined by `defineInputRule` and stored under the
-// `"autoInput"` name in the editor schema's
-// [`registry`](#Schema.registry)—by default, these are things
-// like smart quotes, and automatically wrapping a block in a list if
-// you start it with `"1. "`.
+// :: Object<InputRule>
+// Base set of input rules, enabled by default when `autoInput` is set
+// to `true`.
+var autoInputRules = Object.create(null);
+
+exports.autoInputRules = autoInputRules;
+// :: union<bool, [union<InputRule, string, Object<?InputRule>>]> #path=autoInput #kind=option
+// Controls the [input rules](#InputRule) initially active in the
+// editor. Pass an array of sources, which can be either an input
+// rule, the string `"schema"`, to add rules
+// [registered](#SchemaItem.register) on the schema items (under the
+// string `"autoInput"`), or an object containing input rules. To
+// remove previously included rules, you can add an object that maps
+// their name to `null`.
+//
+// The value `false` (the default) is a shorthand for no input rules,
+// and the value `true` for `["schema", autoInputRules]`.
 (0, _edit.defineOption)("autoInput", false, function (pm, val) {
   if (pm.mod.autoInput) {
     pm.mod.autoInput.forEach(function (name) {
@@ -25,40 +35,44 @@ var _inputrules = require("./inputrules");
     pm.mod.autoInput = null;
   }
   if (val) {
-    pm.mod.autoInput = [];
-    pm.schema.registry("autoInput", function (rule, type, name) {
-      var rname = name + ":" + rule.name,
-          handler = rule.handler;
-      if (handler.bind) handler = handler.bind(type);
-      (0, _inputrules.addInputRule)(pm, new _inputrules.InputRule(rname, rule.match, rule.filter, handler));
-      pm.mod.autoInput.push(rname);
-    });
-    for (var _name in rules) {
-      var rule = rules[_name];
-      (0, _inputrules.addInputRule)(pm, rule);
-      pm.mod.autoInput.push(rule.name);
-    }
+    (function () {
+      if (val === true) val = ["schema", autoInputRules];
+      var rules = Object.create(null),
+          list = pm.mod.autoInput = [];
+      val.forEach(function (spec) {
+        if (spec === "schema") {
+          pm.schema.registry("autoInput", function (rule, type, name) {
+            var rname = name + ":" + rule.name,
+                handler = rule.handler;
+            if (handler.bind) handler = handler.bind(type);
+            rules[rname] = new _inputrules.InputRule(rname, rule.match, rule.filter, handler);
+          });
+        } else if (spec instanceof _inputrules.InputRule) {
+          rules[spec.name] = spec;
+        } else {
+          for (var _name in spec) {
+            var _val = spec[_name];
+            if (_val == null) delete rules[_name];else rules[_name] = _val;
+          }
+        }
+      });
+      for (var _name2 in rules) {
+        (0, _inputrules.addInputRule)(pm, rules[_name2]);
+        list.push(rules[_name2].name);
+      }
+    })();
   }
 });
 
-var rules = Object.create(null);
+autoInputRules.emDash = new _inputrules.InputRule("emDash", /--$/, "-", "—");
 
-// :: (InputRule)
-// Define an input rule to be used when the `autoInput` option is enabled.
+autoInputRules.openDoubleQuote = new _inputrules.InputRule("openDoubleQuote", /\s(")$/, '"', "“");
 
-function defineInputRule(rule) {
-  rules[rule.name] = rule;
-}
+autoInputRules.closeDoubleQuote = new _inputrules.InputRule("closeDoubleQuote", /"$/, '"', "”");
 
-defineInputRule(new _inputrules.InputRule("emDash", /--$/, "-", "—"));
+autoInputRules.openSingleQuote = new _inputrules.InputRule("openSingleQuote", /\s(')$/, "'", "‘");
 
-defineInputRule(new _inputrules.InputRule("openDoubleQuote", /\s(")$/, '"', "“"));
-
-defineInputRule(new _inputrules.InputRule("closeDoubleQuote", /"$/, '"', "”"));
-
-defineInputRule(new _inputrules.InputRule("openSingleQuote", /\s(')$/, "'", "‘"));
-
-defineInputRule(new _inputrules.InputRule("closeSingleQuote", /'$/, "'", "’"));
+autoInputRules.closeSingleQuote = new _inputrules.InputRule("closeSingleQuote", /'$/, "'", "’");
 
 _model.BlockQuote.register("autoInput", new _inputrules.InputRule("startBlockQuote", /^\s*> $/, " ", function (pm, _, pos) {
   wrapAndJoin(pm, pos, this);

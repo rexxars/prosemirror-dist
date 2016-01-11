@@ -8,7 +8,7 @@ var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = 
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-exports.defineParamHandler = defineParamHandler;
+exports.defineDefaultParamHandler = defineDefaultParamHandler;
 exports.updateCommands = updateCommands;
 exports.selectedNodeAttr = selectedNodeAttr;
 
@@ -38,8 +38,6 @@ var _utilObj = require("../util/obj");
 
 var _base_commands = require("./base_commands");
 
-var paramHandlers = Object.create(null);
-
 // ;; A command is a named piece of functionality that can be bound to
 // a key, shown in the menu, or otherwise exposed to the user.
 //
@@ -66,7 +64,7 @@ var Command = (function () {
   // Execute this command. If the command takes
   // [parameters](#Command.params), they can be passed as second
   // argument here, or omitted, in which case a [parameter
-  // handler](#defineParamHandler) will be called to prompt the user
+  // handler](#commandParamHandler) will be called to prompt the user
   // for values.
   //
   // Returns the value returned by the command spec's [`run`
@@ -81,7 +79,7 @@ var Command = (function () {
       var run = this.spec.run;
       if (!this.params.length) return run.call(this.self, pm);
       if (params) return run.call.apply(run, [this.self, pm].concat(_toConsumableArray(params)));
-      var handler = getParamHandler(pm);
+      var handler = pm.options.commandParamHandler || defaultParamHandler;
       if (!handler) return false;
       handler(pm, this, function (params) {
         if (params) run.call.apply(run, [_this.self, pm].concat(_toConsumableArray(params)));
@@ -315,19 +313,19 @@ CommandSet["default"] = CommandSet.empty.add("schema").add(_base_commands.baseCo
 // the command's source item), tries to derive an initial value for
 // the parameter, or return null if it can't.
 
-// :: (string, (pm: ProseMirror, cmd: Command, callback: (?[any])))
-// Register a parameter handler, which is a function that prompts the
-// user to enter values for a command's [parameters](#CommandParam), and
-// calls a callback with the values received. See also the
-// [`commandParamHandler` option](#commandParamHandler).
+var defaultParamHandler = null;
 
-function defineParamHandler(name, handler) {
-  paramHandlers[name] = handler;
-}
+// :: ((pm: ProseMirror, cmd: Command, callback: (?[any])), bool)
+// Register a default [parameter handler](#commandParamHandler), which
+// is a function that prompts the user to enter values for a command's
+// [parameters](#CommandParam), and calls a callback with the values
+// received. If `override` is set to false, the new handler will be
+// ignored if another handler has already been defined.
 
-function getParamHandler(pm) {
-  var option = pm.options.commandParamHandler;
-  if (option && paramHandlers[option]) return paramHandlers[option];
+function defineDefaultParamHandler(handler) {
+  var override = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+  if (!defaultParamHandler || override) defaultParamHandler = handler;
 }
 
 function deriveKeymap(pm) {

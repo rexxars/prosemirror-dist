@@ -121,6 +121,25 @@ var Pos = (function () {
       return new Pos(path, pos.offset + add);
     }
 
+    // :: (Node, ?bool) → bool
+    // Checks whether this position is valid in the given document. When
+    // `requireTextblock` is true, only positions inside textblocks are
+    // considered valid.
+  }, {
+    key: "isValid",
+    value: function isValid(doc, requireTextblock) {
+      for (var i = 0, node = doc;; i++) {
+        if (i == this.path.length) {
+          if (requireTextblock && !node.isTextblock) return false;
+          return this.offset <= node.size;
+        } else {
+          var n = this.path[i];
+          if (n >= node.size) return false;
+          node = node.child(n);
+        }
+      }
+    }
+
     // :: () → Object
     // Convert the position to a JSON-safe representation.
   }, {
