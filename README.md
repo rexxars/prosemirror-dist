@@ -1,3 +1,7 @@
+### DISCONTINUED
+
+** IMPORTANT: ** This is no longer maintained, and will be unpublished from NPM. Use the official `prosemirror` package instead, which now features dist files.
+
 # prosemirror-dist
 
 **Temporary**, pre-built, dist-version of ProseMirror. Released ~daily if there has been changes in upstream repo. The release process is automated, so regardless of breaking changes, the major version will be bumped. Version your dependency accordingly.
