@@ -11,6 +11,10 @@
     "procstreams": "^0.3.0",
     "prosemirror": "github:prosemirror/prosemirror"
   },
+  "dependencies": {
+    "browserkeymap": "^0.1.0",
+    "markdown-it": "^4.4.0"
+  },
   "scripts": {
     "test": "eslint ."
   },
